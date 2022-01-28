@@ -1,11 +1,12 @@
 from distutils.log import debug
+from msilib import schema
 from turtle import textinput
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://ftbkschqwtljwb:afce27db674440599b3e0c8ed2c4aa956c3351f0b5691dac3626d0dd681ace85@ec2-3-216-113-109.compute-1.amazonaws.com:5432/dc28mb408i45v8"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://okopxbqcfddbfm:c490fbea49aaa7351485a97719c1665922547ae5b49f62b4eac66c9378df2467@ec2-34-205-46-149.compute-1.amazonaws.com:5432/dceocr7oeju55r"
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
@@ -52,6 +53,27 @@ class ReminderSchema(ma.Schema):
 reminder_schema = ReminderSchema()
 multiple_reminder_schema = ReminderSchema(many=True)
 
+
+@app.route("/month/add", methods=["POST"])
+def add_month():
+    post_data = request.get_json()
+    name = post_data["name"]
+    year = post_data["year"]
+    days_in_month = post_data["days_in_month"]
+    days_in_previous_month = post_data["days_in_previous_month"]
+    start_day = post_data["start_day"]
+
+    record = Month(name, year, days_in_month, days_in_previous_month, start_day)
+    db.session.add(record)
+    # Once added you must commit 
+    db.session.commit()
+
+    return jsonify("Month added")
+
+@app.route("/month/get", methods=["GET"])
+def get_all_months():
+    records = db.sessions.query(Month).all()
+    return jsonify(multiple_month_schema.dump(records))
 
 if __name__ == '__main__':
     app.run(debug=True)
