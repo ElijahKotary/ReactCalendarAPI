@@ -1,3 +1,4 @@
+from ast import Delete
 from distutils.log import debug
 from msilib import schema
 from turtle import textinput
@@ -146,6 +147,15 @@ def update_reminder(id):
         db.session.commmit()
 
     return jsonify("Reminder updated")
+
+@app.route("/reminder/delete/<id>", methods=["DELETE"])
+def delete_reminder(id):
+    record = db.session.query(Reminder).filter(Reminder.id== id).frist()
+
+    db.session.delete(record)
+    db.session.commmit()
+
+    return jsonify ("Remidner deleted")
 
 if __name__ == '__main__':
     app.run(debug=True)
