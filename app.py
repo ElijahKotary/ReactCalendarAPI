@@ -48,13 +48,13 @@ multiple_month_schema = MonthSchema(many=True)
 
 class ReminderSchema(ma.Schema):
     class Meta:
-        feilds = ("id", "day", "month", "year", "text")
+        fields = ("id", "day", "month", "year", "text")
 
 reminder_schema = ReminderSchema()
 multiple_reminder_schema = ReminderSchema(many=True)
 
 
-# Month routes
+# Month End Points
 @app.route("/month/add", methods=["POST"])
 def add_month():
     post_data = request.get_json()
@@ -96,6 +96,9 @@ def add_multiple_months():
 @app.route("/month/get", methods=["GET"])
 def get_all_months():
     records = db.sessions.query(Month).all()
+    print(records)
+    print("-------")
+    print(multiple_month_schema.dump(records))
     return jsonify(multiple_month_schema.dump(records))
 
 @app.route("/month/get/<year>", methods=["GET"])
@@ -103,6 +106,46 @@ def get_months_by_year(year):
     records = db.session.query(Month).filter(Month.year == year).all()
     return jsonify(multiple_month_schema.dump(records))
 
+
+# Reminder End Point
+@app.route("/reminder/add", methods=["POST"])
+def add_reminder():
+    post_data = request.get_json()
+    day = post_data["day"]
+    month = post_data["month"]
+    year = post_data["year"]
+    text = post_data["text"]
+
+    record = Reminder(day, month, year, text)
+    db.session.add(record)
+    db.session.commit()
+
+    return jsonify("Reminder added")
+
+@app.route("/reminder/get", methods=["GET"])
+def get_all_reminders():
+    records = db.session.query(Reminder).all()
+    return jsonify(multiple_reminder_schema.dump(records))
+
+@app.route("/reminder/get/<month>/<year>", methods=["GET"])
+def get_reminders_by_month(month,year):
+    records = db.session.query(Reminder).filter(Reminder.month == month).filter(Reminder.year == year).all()
+    return jsonify(multiple_reminder_schema.dump(records))
+
+
+# PUT is an updater method
+@app.route("/reminder/update/<id>", methods=["PUT"])
+def update_reminder(id):
+    record= db.session.query(Reminder).filter(Reminder.id == id).first()
+
+    put_data = request.get_json()
+    text = put_data.get["text", None]
+
+    if text is not None:
+        record.text = text
+        db.session.commmit()
+
+    return jsonify("Reminder updated")
 
 if __name__ == '__main__':
     app.run(debug=True)
