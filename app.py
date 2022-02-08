@@ -1,16 +1,14 @@
-from ast import Delete
-from distutils.log import debug
-from msilib import schema
-from turtle import textinput
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://okopxbqcfddbfm:c490fbea49aaa7351485a97719c1665922547ae5b49f62b4eac66c9378df2467@ec2-34-205-46-149.compute-1.amazonaws.com:5432/dceocr7oeju55r"
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+CORS(app)
 
 class Month(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -96,7 +94,7 @@ def add_multiple_months():
 
 @app.route("/month/get", methods=["GET"])
 def get_all_months():
-    records = db.sessions.query(Month).all()
+    records = db.session.query(Month).all()
     print(records)
     print("-------")
     print(multiple_month_schema.dump(records))
@@ -106,6 +104,15 @@ def get_all_months():
 def get_months_by_year(year):
     records = db.session.query(Month).filter(Month.year == year).all()
     return jsonify(multiple_month_schema.dump(records))
+
+@app.route("/month/delete/<id>", methods=["DELETE"])
+def delete_month(id):
+    record= db.session.query(Month).filter(Month.id == id).first()
+
+    db.session.delete(record)
+    db.session.commit()
+
+    return jsonify ("Month deleted")
 
 
 # Reminder End Point
@@ -144,7 +151,7 @@ def update_reminder(id):
 
     if text is not None:
         record.text = text
-        db.session.commmit()
+        db.session.commit()
 
     return jsonify("Reminder updated")
 
@@ -153,7 +160,7 @@ def delete_reminder(id):
     record = db.session.query(Reminder).filter(Reminder.id== id).frist()
 
     db.session.delete(record)
-    db.session.commmit()
+    db.session.commit()
 
     return jsonify ("Remidner deleted")
 
